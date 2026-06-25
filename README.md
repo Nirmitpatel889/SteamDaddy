@@ -87,6 +87,47 @@ Skip the manual downloads and fetch manifests directly through SteamDaddy.
 
 ---
 
+### Method 3: Install Plugin (Steam UI Integration)
+
+SteamDaddy ships with a built-in **Millennium plugin** that adds a native unlock UI directly inside your Steam client — no separate window needed.
+
+1. **Install Millennium** first if you haven't already → [millennium.web.app](https://millennium.web.app)
+2. Launch **SteamDaddy**, right-click inside the window, and select **"Install Plugin"**.
+   - SteamDaddy will automatically copy the plugin into your Millennium plugins directory and activate it.
+3. Steam will restart automatically.
+4. Once Steam is back, open the **Steam client** → go to the **Millennium** tab in the sidebar → **Plugins** → find **SteamDaddy** and make sure the toggle is **turned ON**.
+5. The plugin tab will now appear inside your Steam library, letting you unlock games without leaving Steam.
+
+> [!NOTE]
+> Millennium must be installed *before* pressing Install Plugin. If it isn't detected, SteamDaddy will tell you.
+
+---
+
+## 🔀 Dual Mode: SteamTools vs. Daddy Mode
+
+SteamDaddy operates in two distinct modes. You can switch between them at any time using the **slim toggle in the top-left corner** of the app.
+
+### SteamTools Mode *(Default)*
+
+Works entirely on top of the standard **SteamTools dependency layer** — the same architecture most manifest tools use. Repair functions like **Repair SteamTools**, **Revert Repair**, and **Force Unlock** are active in this mode.
+
+Use this if everything is working fine and you just want the standard manifest management workflow.
+
+### Daddy Mode 🔴 *(Beta)*
+
+Switches the underlying proxy layer to **SteamDaddy's own DLL stack**, bypassing SteamTools entirely. This mode is specifically built for situations where you're experiencing:
+
+- **"No Internet Connection"** errors that persist even after repair
+- **Purchase issue errors** that won't go away
+- General instability caused by SteamTools backend outages
+
+When you switch to Daddy Mode, SteamDaddy replaces the Steam proxy DLLs with its own layer and restarts Steam automatically. All features — drag-and-drop, API fetch, plugin — continue to work normally. The repair/revert options are intentionally hidden in this mode since they don't apply to the Daddy Mode stack.
+
+> [!WARNING]
+> **Daddy Mode is currently in Beta.** It works well for the issues listed above, but you may occasionally need to switch back to SteamTools Mode depending on what you're doing. If one mode gives you trouble, toggle to the other — they're designed to complement each other.
+
+---
+
 ## ⚖️ Legal & Disclaimer
 
 > [!IMPORTANT]
@@ -99,6 +140,12 @@ This repository and its contents are provided strictly for **educational purpose
 3. **Intellectual Property:** All trademarks and copyrights belong to their respective owners. This project is independent and is not affiliated with, endorsed by, or connected to any corporate entity.
 
 By cloning, compiling, or executing code from this repository, you acknowledge that you understand these terms, agree to them fully, and assume all associated risks.
+
+---
+
+## 💖 Special Thanks
+
+- Special thanks to **Selectively11** and **OpenSteam001** for their foundational work and contributions to this space.
 
 ---
 

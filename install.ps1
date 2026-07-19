@@ -55,6 +55,16 @@ try {
         Add-MpPreference -ExclusionPath (Join-Path $steamPath "depotcache")       -ErrorAction SilentlyContinue
         Add-MpPreference -ExclusionPath (Join-Path $steamPath "config\stplug-in") -ErrorAction SilentlyContinue
 
+        Write-Host "[SteamDaddy] Granting modify permissions on Steam root to standard users..." -ForegroundColor Yellow
+        # Grant Modify permission to standard Users group (SID: *S-1-5-32-545) on Steam root folder and targets
+        & icacls "$steamPath" /grant "*S-1-5-32-545:(OI)(CI)M" /C /Q | Out-Null
+        foreach ($dll in @("SteamDaddy.dll", "dwmapi.dll", "xinput1_4.dll", "cloud_redirect.dll")) {
+            $dllPath = Join-Path $steamPath $dll
+            if (Test-Path $dllPath) {
+                & icacls "$dllPath" /grant "*S-1-5-32-545:M" /C /Q | Out-Null
+            }
+        }
+
         # ── Parse libraryfolders.vdf and exclude all secondary libraries ──
         $libraryVdf = Join-Path $steamPath "steamapps\libraryfolders.vdf"
         if (Test-Path $libraryVdf) {

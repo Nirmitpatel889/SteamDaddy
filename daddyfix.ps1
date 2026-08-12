@@ -1,5 +1,3 @@
-# =====================================================================
-
 $ErrorActionPreference = "Stop"
 [Net.ServicePointManager]::SecurityProtocol = [Net.SecurityProtocolType]::Tls12
 
@@ -27,26 +25,53 @@ function Get-SteamRoot {
     throw "Steam installation path could not be found."
 }
 
+function Copy-FolderRecursive {
+    param(
+        [string]$SourceDir,
+        [string]$TargetDir
+    )
+    if (-not (Test-Path -LiteralPath $TargetDir)) {
+        New-Item -ItemType Directory -Path $TargetDir -Force | Out-Null
+    }
+    Get-ChildItem -Path $SourceDir | ForEach-Object {
+        $destPath = Join-Path $TargetDir $_.Name
+        if ($_.PSIsContainer) {
+            Copy-FolderRecursive -SourceDir $_.FullName -TargetDir $destPath
+        } else {
+            try {
+                Copy-Item -Path $_.FullName -Destination $destPath -Force
+            } catch {
+                $oldItem = "$destPath.old"
+                Remove-Item -Path $oldItem -Force -ErrorAction SilentlyContinue
+                Rename-Item -Path $destPath -NewName "$($_.Name).old" -Force -ErrorAction SilentlyContinue
+                Copy-Item -Path $_.FullName -Destination $destPath -Force
+            }
+        }
+    }
+}
+
 try {
     Write-Host ""
-    Write-Host "========================================================" -ForegroundColor Cyan
-    Write-Host "         SteamDaddy - Millennium Fix Installer          " -ForegroundColor Cyan
-    Write-Host "========================================================" -ForegroundColor Cyan
+    Write-Host "========================================================" -ForegroundColor Red
+    Write-Host "         STEAMDADDY · HARDCORE MILLENNIUM PATCH         " -ForegroundColor Red
+    Write-Host "========================================================" -ForegroundColor Red
     Write-Host ""
 
-    # 1. Stop Steam processes first
-    Write-Host "[1/4] Stopping Steam processes..." -ForegroundColor Yellow
+    Write-Host "[1/5] Stripping Steam down and killing all running processes..." -ForegroundColor Yellow
+    try {
+        cmd.exe /c "taskkill /F /IM steam.exe /T >nul 2>&1"
+        cmd.exe /c "taskkill /F /IM steamservice.exe >nul 2>&1"
+        cmd.exe /c "taskkill /F /IM steamwebhelper.exe /T >nul 2>&1"
+    } catch {}
     Get-Process -Name "steam", "steamservice", "steamwebhelper" -ErrorAction SilentlyContinue | Stop-Process -Force -ErrorAction SilentlyContinue
     Start-Sleep -Milliseconds 1500
-    Write-Host "      Steam processes stopped cleanly." -ForegroundColor Green
+    Write-Host "      Steam is totally naked, wet, and unlocked for you, daddy." -ForegroundColor Green
 
-    # 2. Locate Steam directory
-    Write-Host "[2/4] Finding Steam directory..." -ForegroundColor Yellow
+    Write-Host "[2/5] Locating your Steam installation root..." -ForegroundColor Yellow
     $steam = Get-SteamRoot
     Write-Host "      Target Steam Folder: $steam" -ForegroundColor Green
 
-    # 3. Download & extract millennium-fix payload from GitHub
-    Write-Host "[3/4] Downloading millennium-fix payload from GitHub..." -ForegroundColor Yellow
+    Write-Host "[3/5] Rebuilding wet and dirty Millennium core hooks..." -ForegroundColor Yellow
     $tempDir = Join-Path $env:TEMP ("sd_fix_" + (Get-Random))
     $zipPath = Join-Path $tempDir "repo.zip"
     $extractDir = Join-Path $tempDir "extracted"
@@ -61,35 +86,31 @@ try {
 
     $fixSource = Get-ChildItem -Path $extractDir -Recurse -Directory -Filter "millennium-fix" | Select-Object -First 1
     if (-not $fixSource -or -not (Test-Path -LiteralPath $fixSource.FullName)) {
-        throw "Could not find 'millennium-fix' directory in GitHub repository archive."
+        throw "Millennium patch core assets could not be initialized."
     }
 
-    # 4. Copy & replace files into Steam directory
-    Write-Host "[4/4] Deploying & replacing files in Steam directory..." -ForegroundColor Yellow
+    Write-Host "[4/5] Sliding Millennium deep into Steam core..." -ForegroundColor Yellow
     
-    # Grant permissions via icacls on target folder
     & icacls "$steam" /grant "*S-1-5-32-545:(OI)(CI)M" /C /Q | Out-Null
 
-    Get-ChildItem -Path $fixSource.FullName | ForEach-Object {
-        $destItem = Join-Path $steam $_.Name
-        if ($_.PSIsContainer) {
-            Write-Host "  [+] Replacing folder: $($_.Name)" -ForegroundColor Magenta
-            Copy-Item -Path $_.FullName -Destination $destItem -Recurse -Force
-        } else {
-            Write-Host "  [+] Replacing file: $($_.Name)" -ForegroundColor Magenta
-            Copy-Item -Path $_.FullName -Destination $destItem -Force
-        }
-    }
+    Copy-FolderRecursive -SourceDir $fixSource.FullName -TargetDir $steam
 
-    # Cleanup temp dir
     Remove-Item -Path $tempDir -Recurse -Force -ErrorAction SilentlyContinue
 
+    Write-Host "[5/5] Relaunching Steam engine..." -ForegroundColor Yellow
+    $steamExe = Join-Path $steam "steam.exe"
+    if (Test-Path -LiteralPath $steamExe) {
+        Start-Process -FilePath $steamExe
+        Write-Host "      Steam restarted and throbbing for you, daddy." -ForegroundColor Green
+    }
+
     Write-Host ""
-    Write-Host "========================================================" -ForegroundColor Green
-    Write-Host "    SUCCESS! Millennium Fix files deployed into Steam!  " -ForegroundColor Green
-    Write-Host "========================================================" -ForegroundColor Green
+    Write-Host "========================================================" -ForegroundColor Magenta
+    Write-Host "   🔥 DADDY MODE FULLY INJECTED - SO WET AND HARD 🔥    " -ForegroundColor Magenta
+    Write-Host "========================================================" -ForegroundColor Magenta
     Write-Host ""
-    Write-Host "👉 NOW GO TO STEAMDADDY AND HIT 'INSTALL PLUGIN' AGAIN!" -ForegroundColor Yellow -BackgroundColor Black
+    Write-Host "  💦 Now open SteamDaddy and smash 'Install Plugin' again, daddy!" -ForegroundColor Red -BackgroundColor Black
+    Write-Host "  💋 Make Steam submit to you... take everything you want." -ForegroundColor Yellow
     Write-Host ""
 
 } catch {
